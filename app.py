@@ -1,35 +1,45 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Store default parameter values
-parameters = {
-    "Product": "None",
-    "ASIN": "None",
-    "Country": "None",
-    "IsProduct": "None",
-    "IsCart": "None"
-}
+# Store data in a list to preserve old data
+data_store = []
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-    global parameters
+# Route to handle POST requests and store the data
+@app.route('/', methods=['POST'])
+def add_data():
+    global data_store
 
-    # Handle POST request to update parameters
-    if request.method == "POST":
-        if request.is_json:
-            data = request.get_json()
-            parameters["Product"] = data.get("Product", parameters["Product"])
-            parameters["ASIN"] = data.get("ASIN", parameters["ASIN"])
-            parameters["Country"] = data.get("Country", parameters["Country"])
-            parameters["IsProduct"] = data.get("IsProduct", parameters["IsProduct"])
-            parameters["IsCart"] = data.get("IsCart", parameters["IsCart"])
-            return jsonify({"message": "Parameters updated successfully!", "parameters": parameters}), 200
-        else:
-            return jsonify({"error": "Invalid content type! Please use application/json."}), 400
+    # Ensure the request contains JSON
+    if not request.is_json:
+        return jsonify({"error": "Invalid JSON"}), 400
 
-    # Render the HTML page
-    return render_template("index.html", parameters=parameters)
+    # Get the JSON data from the request
+    new_data = request.get_json()
 
-if __name__ == "__main__":
+    # Append the new data to the data_store
+    data_store.append(new_data)
+
+    # Return a confirmation response
+    return jsonify({"message": "Data added successfully!", "current_data": data_store}), 200
+
+# Route to display the data in the desired format
+@app.route('/', methods=['GET'])
+def display_data():
+    # Prepare the data display format
+    formatted_data = []
+    for item in data_store:
+        formatted_line = (
+            f'Product: "{item.get("Product", "N/A")}"  '
+            f'ASIN: "{item.get("ASIN", "N/A")}"  '
+            f'Country: "{item.get("Country", "N/A")}"  '
+            f'IsProduct: "{item.get("IsProduct", "N/A")}"  '
+            f'IsCart: "{item.get("IsCart", "N/A")}"'
+        )
+        formatted_data.append(formatted_line)
+
+    # Join all lines with a newline character
+    return "<br>".join(formatted_data), 200
+
+if __name__ == '__main__':
     app.run(debug=True)
