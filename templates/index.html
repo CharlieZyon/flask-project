@@ -3,57 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Info</title>
+    <title>Data Display</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
             text-align: center;
+            padding: 8px;
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
+        th {
+            background-color: #f4f4f4;
         }
-        .row {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px; /* Space between columns */
-        }
-        .row div {
-            flex: 1;
-            text-align: center;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
-        }
-        .row div strong {
-            display: block;
-            font-weight: bold;
-            color: #333;
+        td.highlight {
+            background-color: red;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Product Info</h1>
-        <div class="row">
-            <div><strong>Product:</strong> {{ parameters["Product"] }}</div>
-            <div><strong>ASIN:</strong> {{ parameters["ASIN"] }}</div>
-            <div><strong>Country:</strong> {{ parameters["Country"] }}</div>
-            <div><strong>IsProduct:</strong> {{ parameters["IsProduct"] }}</div>
-            <div><strong>IsCart:</strong> {{ parameters["IsCart"] }}</div>
-        </div>
-    </div>
+    <h1>Data Display</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>ASIN</th>
+                <th>Country</th>
+                <th>IsProduct</th>
+                <th>IsCart</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item.Product }}</td>
+                <td>{{ item.ASIN }}</td>
+                <td>{{ item.Country }}</td>
+                <td class="{{ 'highlight' if item.IsProduct == 'Not there' else '' }}">{{ item.IsProduct }}</td>
+                <td class="{{ 'highlight' if item.IsCart == 'Not there' else '' }}">{{ item.IsCart }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
