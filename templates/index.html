@@ -25,10 +25,27 @@
             background-color: red;
             color: white;
         }
+        .button-container {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <h1>Data Display</h1>
+    <div class="button-container">
+        <button id="clear-button">Clear</button>
+    </div>
     <table>
         <thead>
             <tr>
@@ -51,5 +68,17 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        document.getElementById("clear-button").addEventListener("click", function() {
+            fetch("/clear", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message); // Show a message that data was cleared
+                    location.reload();   // Reload the page to refresh the table
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    </script>
 </body>
 </html>

@@ -20,5 +20,11 @@ def add_data():
 def display_data():
     return render_template('index.html', data=data_store)
 
+@app.route('/clear', methods=['POST'])
+def clear_data():
+    global data_store
+    data_store = []  # Clear the data
+    return jsonify({"message": "All data cleared!"}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
