@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid black;
@@ -19,33 +20,28 @@
             padding: 8px;
         }
         th {
-            background-color: #f4f4f4;
+            background-color: #f2f2f2;
         }
-        td.highlight {
-            background-color: red;
+        .clear-button {
+            background-color: blue;
             color: white;
-        }
-        .button-container {
-            margin-bottom: 20px;
-        }
-        button {
             padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
             border: none;
             cursor: pointer;
-            font-size: 16px;
         }
-        button:hover {
-            background-color: #0056b3;
+        .clear-button:hover {
+            background-color: darkblue;
+        }
+        .red-cell {
+            background-color: red;
+            color: white;
         }
     </style>
 </head>
 <body>
     <h1>Data Display</h1>
-    <div class="button-container">
-        <button id="clear-button">Clear</button>
-    </div>
+    <button class="clear-button" onclick="clearData()">Clear</button>
+
     <table>
         <thead>
             <tr>
@@ -56,29 +52,58 @@
                 <th>IsCart</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="data-table">
             {% for item in data %}
             <tr>
                 <td>{{ item.Product }}</td>
                 <td>{{ item.ASIN }}</td>
                 <td>{{ item.Country }}</td>
-                <td class="{{ 'highlight' if item.IsProduct == 'Not there' else '' }}">{{ item.IsProduct }}</td>
-                <td class="{{ 'highlight' if item.IsCart == 'Not there' else '' }}">{{ item.IsCart }}</td>
+                <td>{{ item.IsProduct }}</td>
+                <td class="{{ 'red-cell' if item.IsCart == 'Not there' else '' }}">{{ item.IsCart }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <script>
-        document.getElementById("clear-button").addEventListener("click", function() {
-            fetch("/clear", { method: "POST" })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message); // Show a message that data was cleared
-                    location.reload();   // Reload the page to refresh the table
-                })
-                .catch(error => console.error("Error:", error));
+        const socket = io();
+
+        // Listen for 'new_data' events from the server
+        socket.on('new_data', function(newData) {
+            const table = document.getElementById('data-table');
+
+            // Create a new row for the incoming data
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${newData.Product}</td>
+                <td>${newData.ASIN}</td>
+                <td>${newData.Country}</td>
+                <td>${newData.IsProduct}</td>
+                <td class="${newData.IsCart === 'Not there' ? 'red-cell' : ''}">${newData.IsCart}</td>
+            `;
+            table.appendChild(newRow);
         });
+
+        // Listen for 'clear_data' events from the server
+        socket.on('clear_data', function() {
+            const table = document.getElementById('data-table');
+            table.innerHTML = ''; // Clear all rows in the table
+        });
+
+        // Clear data function
+        function clearData() {
+            fetch('/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Error clearing data:', error));
+        }
     </script>
 </body>
 </html>
