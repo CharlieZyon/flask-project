@@ -3,45 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Display</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <title>Product Data</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
         th, td {
             border: 1px solid black;
-            padding: 10px;
-            text-align: center;
+            padding: 8px;
+            text-align: left;
         }
         th {
             background-color: #f2f2f2;
         }
-        .clear-btn {
+        .clear-button {
             background-color: blue;
             color: white;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border: none;
             cursor: pointer;
         }
-        .clear-btn:hover {
-            opacity: 0.8;
+        .clear-button:hover {
+            background-color: darkblue;
         }
-        .is-cart-true {
+        /* Add red background color for 'Not there' */
+        .not-there {
             background-color: red;
             color: white;
         }
     </style>
 </head>
 <body>
-    <h1>Data Display</h1>
-    <button class="clear-btn" onclick="clearData()">Clear</button>
+    <h1>Product Data</h1>
+    <button class="clear-button" onclick="clearData()">Clear</button> <!-- Moved the button above the table -->
     <table>
         <thead>
             <tr>
@@ -53,45 +49,46 @@
             </tr>
         </thead>
         <tbody id="data-table">
-            <!-- Data will be appended here -->
+            {% for entry in data %}
+            <tr>
+                <td>{{ entry.product }}</td>
+                <td>{{ entry.asin }}</td>
+                <td>{{ entry.country }}</td>
+                <td class="{{ 'not-there' if entry.is_product == 'Not there' else '' }}">{{ entry.is_product }}</td>
+                <td class="{{ 'not-there' if entry.is_cart == 'Not there' else '' }}">{{ entry.is_cart }}</td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 
     <script>
         const socket = io();
 
-        // Listen for updates and clear events from the server
-        socket.on('update_data', (data) => {
-            updateTable(data);
-        });
-
-        socket.on('clear_data', () => {
-            document.getElementById('data-table').innerHTML = '';
-        });
-
-        // Function to update the table
-        function updateTable(data) {
+        // Listen for real-time updates
+        socket.on('update_data', function(data) {
             const tableBody = document.getElementById('data-table');
-            tableBody.innerHTML = ''; // Clear existing table content
-            data.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.product}</td>
-                    <td>${item.asin}</td>
-                    <td>${item.country}</td>
-                    <td>${item.isProduct}</td>
-                    <td class="${item.isCart === 'Not there' ? 'is-cart-true' : ''}">${item.isCart}</td>
+            tableBody.innerHTML = ''; // Clear the table
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.product || ''}</td>
+                    <td>${row.asin || ''}</td>
+                    <td>${row.country || ''}</td>
+                    <td class="${row.isProduct === 'Not there' ? 'not-there' : ''}">${row.isProduct || ''}</td>
+                    <td class="${row.isCart === 'Not there' ? 'not-there' : ''}">${row.isCart || ''}</td>
                 `;
-                tableBody.appendChild(row);
+                tableBody.appendChild(tr);
             });
-        }
+        });
 
-        // Function to clear data
+        // Clear data function
         function clearData() {
             fetch('/clear_data', { method: 'POST' })
                 .then(response => response.json())
-                .then(data => console.log(data.message))
-                .catch(error => console.error('Error clearing data:', error));
+                .then(data => {
+                    console.log(data.message);
+                })
+                .catch(error => console.error('Error:', error));
         }
     </script>
 </body>
