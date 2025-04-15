@@ -4,40 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Data</title>
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
+            margin: 20px 0;
+            font-size: 18px;
             text-align: left;
         }
-        th {
+
+        table thead tr {
             background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
         }
-        .clear-button {
-            background-color: blue;
-            color: white;
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .highlight-red {
+            color: #fff;
+            background-color: #ff4d4d;
+        }
+
+        #clear-button {
+            display: inline-block;
             padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #0056b3;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
+            margin-bottom: 20px;
         }
-        .clear-button:hover {
-            background-color: darkblue;
-        }
-        /* Add red background color for 'Not there' */
-        .not-there {
-            background-color: red;
-            color: white;
+
+        #clear-button:hover {
+            background-color: #003d80;
         }
     </style>
 </head>
 <body>
     <h1>Product Data</h1>
-    <button class="clear-button" onclick="clearData()">Clear</button> <!-- Moved the button above the table -->
+    <button id="clear-button">Clear</button>
     <table>
         <thead>
             <tr>
@@ -49,13 +83,13 @@
             </tr>
         </thead>
         <tbody id="data-table">
-            {% for entry in data %}
+            {% for item in data %}
             <tr>
-                <td>{{ entry.product }}</td>
-                <td>{{ entry.asin }}</td>
-                <td>{{ entry.country }}</td>
-                <td class="{{ 'not-there' if entry.is_product == 'Not there' else '' }}">{{ entry.is_product }}</td>
-                <td class="{{ 'not-there' if entry.is_cart == 'Not there' else '' }}">{{ entry.is_cart }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.asin }}</td>
+                <td>{{ item.country }}</td>
+                <td class="{{ 'highlight-red' if item.is_product == 'Not there' else '' }}">{{ item.is_product }}</td>
+                <td class="{{ 'highlight-red' if item.is_cart == 'Not there' else '' }}">{{ item.is_cart }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -66,30 +100,32 @@
 
         // Listen for real-time updates
         socket.on('update_data', function(data) {
-            const tableBody = document.getElementById('data-table');
-            tableBody.innerHTML = ''; // Clear the table
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.product || ''}</td>
-                    <td>${row.asin || ''}</td>
-                    <td>${row.country || ''}</td>
-                    <td class="${row.isProduct === 'Not there' ? 'not-there' : ''}">${row.isProduct || ''}</td>
-                    <td class="${row.isCart === 'Not there' ? 'not-there' : ''}">${row.isCart || ''}</td>
+            const table = document.getElementById('data-table');
+            table.innerHTML = ''; // Clear existing rows
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.product}</td>
+                    <td>${item.asin}</td>
+                    <td>${item.country}</td>
+                    <td class="${item.isProduct === 'Not there' ? 'highlight-red' : ''}">${item.isProduct}</td>
+                    <td class="${item.isCart === 'Not there' ? 'highlight-red' : ''}">${item.isCart}</td>
                 `;
-                tableBody.appendChild(tr);
+                table.appendChild(row);
             });
         });
 
-        // Clear data function
-        function clearData() {
-            fetch('/clear_data', { method: 'POST' })
+        // Clear button functionality
+        document.getElementById('clear-button').addEventListener('click', function() {
+            fetch('/clear_data', { method: 'DELETE' })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data.message);
+                    if (data.message) {
+                        console.log(data.message);
+                    }
                 })
                 .catch(error => console.error('Error:', error));
-        }
+        });
     </script>
 </body>
 </html>

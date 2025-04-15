@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'  # SQLite database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 # Define the database model
 class ProductData(db.Model):
@@ -62,38 +62,26 @@ def add_data():
             }
             for entry in ProductData.query.all()
         ]
-        socketio.emit('update_data', updated_data, namespace='/')
+        socketio.emit('update_data', updated_data)
 
-        return jsonify({"message": "Data added successfully!"}), 200
-
+        return jsonify({"message": "Data added successfully"}), 201
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error: {e}")
-        return jsonify({"error": "Internal Server Error"}), 500
+        return jsonify({"error": str(e)}), 500
 
 # Clear data route
-@app.route('/clear_data', methods=['POST'])
+@app.route('/clear_data', methods=['DELETE'])
 def clear_data():
     try:
-        # Delete all data from the database
+        # Delete all entries from the database
         db.session.query(ProductData).delete()
         db.session.commit()
 
-        # Emit an empty data set to all connected clients
-        socketio.emit('update_data', [], namespace='/')
+        # Emit the empty data list to all connected clients
+        socketio.emit('update_data', [])
 
-        return jsonify({"message": "All data cleared!"}), 200
-
+        return jsonify({"message": "All data cleared successfully"}), 200
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error: {e}")
-        return jsonify({"error": "Internal Server Error"}), 500
-
-# Test route to ensure the server is working
-@app.route('/test', methods=['GET'])
-def test():
-    return jsonify({"message": "Server is working!"}), 200
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Run the app with SocketIO
-    socketio.run(app, host='0.0.0.0', port=5001)
+    socketio.run(app, debug=True)
